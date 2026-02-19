@@ -1,9 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
 from config import SECRET_KEY
-from auth import router as auth_router
+from auth import router as auth_router, get_valid_token
+import spotify
+from gemini import extract_artists_from_image
 
 app = FastAPI(title="Festify API")
 
@@ -34,6 +37,106 @@ app.add_middleware(
 
 app.include_router(auth_router)
 
+# ---------------------------------------------------------------------------
+# Search
+# ---------------------------------------------------------------------------
+
+@app.get("/search")
+async def search(q: str, request: Request):
+    token = await get_valid_token(request.session)
+    artists = await spotify.search_artists(token, q)
+    return {"artists": artists}
+
+# ---------------------------------------------------------------------------
+# Playlist creation
+# ---------------------------------------------------------------------------
+
+class ArtistInput(BaseModel):
+    id: str | None = None
+    name: str
+
+class PlaylistRequest(BaseModel):
+    artists: list[ArtistInput]
+    track_count: int | str = 10          # int or "discography"
+    per_artist_counts: dict[str, int | str] | None = None
+    playlist_name: str = "Festify Playlist"
+
+@app.post("/playlist/create")
+async def create_playlist(body: PlaylistRequest, request: Request):
+    token = await get_valid_token(request.session)
+    user_id = request.session.get("spotify_user_id")
+
+    # Cache user_id in session so we don't fetch it every time
+    if not user_id:
+        import httpx as _httpx
+        from config import SPOTIFY_API_BASE
+        async with _httpx.AsyncClient() as client:
+            r = await client.get(
+                f"{SPOTIFY_API_BASE}/me",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+        if r.status_code != 200:
+            raise HTTPException(status_code=401, detail="Could not fetch user profile.")
+        request.session["spotify_user_id"] = r.json()["id"]
+        user_id = request.session["spotify_user_id"]
+
+    # Create the playlist
+    playlist = await spotify.create_playlist(token, user_id, body.playlist_name)
+    playlist_id = playlist["id"]
+    playlist_url = playlist["external_urls"]["spotify"]
+
+    # Collect track URIs for each artist
+    all_uris = []
+    for artist in body.artists:
+        count = (
+            body.per_artist_counts.get(artist.name, body.track_count)
+            if body.per_artist_counts
+            else body.track_count
+        )
+
+        # Resolve name → id if needed
+        artist_id = artist.id
+        if not artist_id:
+            artist_id = await spotify.resolve_artist_id(token, artist.name)
+        if not artist_id:
+            continue
+
+        if count == "discography":
+            uris = await spotify.get_discography_tracks(token, artist_id)
+        else:
+            uris = await spotify.get_top_tracks(token, artist_id, int(count))
+
+        all_uris.extend(uris)
+
+    total = await spotify.add_tracks_to_playlist(token, playlist_id, all_uris)
+
+    return {
+        "playlist_name": body.playlist_name,
+        "track_count": total,
+        "url": playlist_url,
+    }
+
+# ---------------------------------------------------------------------------
+# Poster scan
+# ---------------------------------------------------------------------------
+
+@app.post("/scan-poster")
+async def scan_poster(request: Request, file: UploadFile = File(...)):
+    await get_valid_token(request.session)  # ensure authenticated
+
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image.")
+
+    data = await file.read()
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image must be under 10MB.")
+
+    artists = await extract_artists_from_image(data, file.content_type)
+    return {"artists": artists}
+
+# ---------------------------------------------------------------------------
+# Health
+# ---------------------------------------------------------------------------
 
 @app.get("/health")
 def health():
