@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API } from '../api'
 
 const TRACK_OPTIONS = [
   { label: 'Top 5', value: 5 },
@@ -26,7 +27,7 @@ export default function ArtistSearch({ user }) {
     setSelected(null)
     setError(null)
     try {
-      const r = await fetch(`/search?q=${encodeURIComponent(query)}`, { credentials: 'include' })
+      const r = await fetch(`${API}/search?q=${encodeURIComponent(query)}`, { credentials: 'include' })
       if (!r.ok) throw new Error('Search failed')
       const data = await r.json()
       setResults(data.artists)
@@ -49,7 +50,7 @@ export default function ArtistSearch({ user }) {
     setCreating(true)
     setError(null)
     try {
-      const r = await fetch('/playlist/create', {
+      const r = await fetch(`${API}/playlist/create`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import SpotifyLogin from './components/SpotifyLogin'
 import ArtistSearch from './components/ArtistSearch'
 import PosterUpload from './components/PosterUpload'
+import { API } from './api'
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -9,7 +10,7 @@ export default function App() {
   const [mode, setMode] = useState('search') // 'search' | 'poster'
 
   useEffect(() => {
-    fetch('/auth/me', { credentials: 'include' })
+    fetch(`${API}/auth/me`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { setUser(data); setLoading(false) })
       .catch(() => setLoading(false))
@@ -40,7 +41,7 @@ export default function App() {
           )}
           <span className="text-sm text-white/60">{user.display_name}</span>
           <a
-            href="/auth/logout"
+            href={`${API}/auth/logout`}
             className="text-xs text-white/40 hover:text-white/70 transition-colors"
           >
             log out

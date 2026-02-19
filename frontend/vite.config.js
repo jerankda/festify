@@ -4,12 +4,4 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  server: {
-    proxy: {
-      '/auth': 'http://127.0.0.1:8000',
-      '/search': 'http://127.0.0.1:8000',
-      '/playlist': 'http://127.0.0.1:8000',
-      '/scan-poster': 'http://127.0.0.1:8000',
-    },
-  },
 })

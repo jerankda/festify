@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { API } from '../api'
 
 const TRACK_OPTIONS = [
   { label: 'Top 5', value: 5 },
@@ -37,7 +38,7 @@ export default function ArtistList({ initialArtists, onReset, user }) {
     setError(null)
 
     try {
-      const r = await fetch('/playlist/create', {
+      const r = await fetch(`${API}/playlist/create`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

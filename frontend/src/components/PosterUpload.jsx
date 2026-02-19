@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import ArtistList from './ArtistList'
+import { API } from '../api'
 
 export default function PosterUpload({ user }) {
   const [scanning, setScanning] = useState(false)
@@ -27,7 +28,7 @@ export default function PosterUpload({ user }) {
     form.append('file', file)
 
     try {
-      const r = await fetch('/scan-poster', {
+      const r = await fetch(`${API}/scan-poster`, {
         method: 'POST',
         credentials: 'include',
         body: form,

@@ -1,3 +1,5 @@
+import { API } from '../api'
+
 export default function SpotifyLogin() {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6 text-white">
@@ -8,7 +10,7 @@ export default function SpotifyLogin() {
         Build a Spotify playlist from any festival lineup in seconds.
       </p>
       <a
-        href="/auth/login"
+        href={`${API}/auth/login`}
         className="flex items-center gap-3 bg-green-500 hover:bg-green-400 text-black font-semibold px-6 py-3 rounded-full transition-colors"
       >
         Connect with Spotify
