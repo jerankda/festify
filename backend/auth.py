@@ -129,7 +129,7 @@ async def callback(request: Request, code: str = None, state: str = None, error:
 @router.get("/logout")
 def logout(request: Request):
     request.session.clear()
-    return JSONResponse({"message": "Logged out."})
+    return RedirectResponse("http://127.0.0.1:5173")
 
 
 @router.get("/me")
