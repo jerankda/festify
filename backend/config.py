@@ -2,7 +2,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).parent / ".env")
+_env_path = Path(__file__).resolve().parent / ".env"
+if not _env_path.exists():
+    raise FileNotFoundError(f".env file not found at {_env_path}")
+load_dotenv(_env_path, override=True)
 
 SPOTIFY_CLIENT_ID = os.environ["SPOTIFY_CLIENT_ID"]
 SPOTIFY_CLIENT_SECRET = os.environ["SPOTIFY_CLIENT_SECRET"]
