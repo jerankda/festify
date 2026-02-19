@@ -123,7 +123,7 @@ async def callback(request: Request, code: str = None, state: str = None, error:
     _set_tokens(request.session, resp.json())
 
     # Redirect to the frontend after successful login
-    return RedirectResponse("http://localhost:5173")
+    return RedirectResponse("http://127.0.0.1:5173")
 
 
 @router.get("/logout")
