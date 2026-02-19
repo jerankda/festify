@@ -10,6 +10,7 @@ load_dotenv(_env_path, override=True)
 SPOTIFY_CLIENT_ID = os.environ["SPOTIFY_CLIENT_ID"]
 SPOTIFY_CLIENT_SECRET = os.environ["SPOTIFY_CLIENT_SECRET"]
 SPOTIFY_REDIRECT_URI = os.environ["SPOTIFY_REDIRECT_URI"]
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
