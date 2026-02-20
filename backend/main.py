@@ -204,10 +204,13 @@ async def debug_spotify_playlist(request: Request):
         "token_preview": token[:40],
         "create_playlist_status": create_resp.status_code,
         "create_playlist_body": create_resp.json(),
+        "create_playlist_retry_after": create_resp.headers.get("retry-after"),
         "add_track_status": add_resp.status_code,
         "add_track_body": add_resp.json(),
+        "add_track_retry_after": add_resp.headers.get("retry-after"),
         "me_playlist_status": me_playlist_resp.status_code,
         "me_playlist_body": me_playlist_resp.json(),
+        "me_playlist_retry_after": me_playlist_resp.headers.get("retry-after"),
     }
 
 @app.get("/debug/gemini-models")

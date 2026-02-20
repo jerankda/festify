@@ -96,12 +96,17 @@ async def resolve_artist_id(token: str, name: str) -> str | None:
 
 
 async def create_playlist(token: str, user_id: str, name: str) -> dict:
-    resp = await _spotify_post(
-        token,
-        f"{SPOTIFY_API_BASE}/users/{user_id}/playlists",
-        {"name": name, "public": True, "description": "Created with Festify"},
-    )
-    print(f"[SPOTIFY] create_playlist url=users/{user_id}/playlists → {resp.status_code}: {resp.text[:300]}", flush=True)
+    payload = {"name": name, "public": False, "description": "Created with Festify"}
+
+    # Try /me/playlists first (more reliable under Development Mode)
+    resp = await _spotify_post(token, f"{SPOTIFY_API_BASE}/me/playlists", payload)
+    print(f"[SPOTIFY] create_playlist /me/playlists → {resp.status_code} retry-after={resp.headers.get('retry-after')} body={resp.text[:300]}", flush=True)
+
+    # Fall back to /users/{id}/playlists if needed
+    if resp.status_code not in (200, 201):
+        resp = await _spotify_post(token, f"{SPOTIFY_API_BASE}/users/{user_id}/playlists", payload)
+        print(f"[SPOTIFY] create_playlist /users/{user_id}/playlists → {resp.status_code} retry-after={resp.headers.get('retry-after')} body={resp.text[:300]}", flush=True)
+
     if resp.status_code not in (200, 201):
         raise HTTPException(status_code=500, detail=f"Failed to create playlist: {resp.status_code} {resp.text}")
     return resp.json()
