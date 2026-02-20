@@ -100,7 +100,7 @@ def login(request: Request):
 async def callback(request: Request, code: str = None, state: str = None, error: str = None):
     """Handle the OAuth callback from Spotify."""
     if error:
-        raise HTTPException(status_code=400, detail=f"Spotify auth error: {error}")
+        return RedirectResponse("http://127.0.0.1:5173")
 
     stored_state = request.session.pop("oauth_state", None)
     if not state or state != stored_state:
