@@ -41,7 +41,6 @@ async def get_top_tracks(token: str, artist_id: str, limit: int) -> list[str]:
         resp = await client.get(
             f"{SPOTIFY_API_BASE}/artists/{artist_id}/top-tracks",
             headers={"Authorization": f"Bearer {token}"},
-            params={"market": "from_token"},
         )
     print(f"[SPOTIFY] get_top_tracks artist={artist_id} → {resp.status_code}: {resp.text[:200]}", flush=True)
     if resp.status_code != 200:
@@ -56,7 +55,7 @@ async def get_discography_tracks(token: str, artist_id: str) -> list[str]:
     async with httpx.AsyncClient() as client:
         # Fetch all albums
         albums_url = f"{SPOTIFY_API_BASE}/artists/{artist_id}/albums"
-        params = {"include_groups": "album,single", "market": "US", "limit": 50}
+        params = {"include_groups": "album,single", "limit": 50}
         album_ids = []
 
         while albums_url:
@@ -78,7 +77,7 @@ async def get_discography_tracks(token: str, artist_id: str) -> list[str]:
             resp = await client.get(
                 f"{SPOTIFY_API_BASE}/albums",
                 headers={"Authorization": f"Bearer {token}"},
-                params={"ids": ",".join(batch), "market": "US"},
+                params={"ids": ",".join(batch)},
             )
             if resp.status_code != 200:
                 continue
