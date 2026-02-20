@@ -4,6 +4,23 @@ export default function SpotifyLogin() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
 
+      {/* Spotify lockout banner */}
+      <div className="bg-yellow-400/10 border-b border-yellow-400/20 px-6 py-3 text-center">
+        <p className="text-yellow-300 text-sm leading-snug">
+          <span className="font-bold">Spotify blocked public access for independent developers.</span>
+          {' '}As of May 2025, only companies with 250,000+ users can get extended API access — so this app only works for a handful of allowlisted accounts.{' '}
+          <a
+            href="https://github.com/jerankda/festify"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-yellow-100 transition-colors"
+          >
+            Self-host it with your own credentials
+          </a>
+          {' '}if you want to use it.
+        </p>
+      </div>
+
       {/* Header */}
       <header className="flex items-center justify-between px-8 py-6 border-b border-white/[0.06]">
         <span className="text-lg font-bold text-green-500 tracking-tight">festify</span>

@@ -49,6 +49,23 @@ export default function App() {
         </div>
       </header>
 
+      {/* Spotify lockout banner */}
+      <div className="bg-yellow-400/10 border-b border-yellow-400/20 px-6 py-3 text-center">
+        <p className="text-yellow-300 text-sm leading-snug">
+          <span className="font-bold">Spotify blocked public access for independent developers.</span>
+          {' '}As of May 2025, only companies with 250,000+ users can get extended API access.{' '}
+          <a
+            href="https://github.com/jerankda/festify"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 hover:text-yellow-100 transition-colors"
+          >
+            Self-host it with your own credentials
+          </a>
+          {' '}if you want to share this with others.
+        </p>
+      </div>
+
       {/* Mode toggle */}
       <div className="flex justify-center mt-8 mb-10">
         <div className="flex bg-white/5 rounded-full p-1 gap-1">
