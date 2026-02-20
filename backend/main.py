@@ -67,8 +67,8 @@ class ArtistInput(BaseModel):
 
 class PlaylistRequest(BaseModel):
     artists: list[ArtistInput]
-    track_count: int | str = 10          # int or "discography"
-    per_artist_counts: dict[str, int | str] | None = None
+    track_count: int = 10
+    per_artist_counts: dict[str, int] | None = None
     playlist_name: str = "Festify Playlist"
 
 @app.post("/playlist/create")
@@ -124,10 +124,7 @@ async def _create_playlist(body: PlaylistRequest, request: Request):
         if not artist_id:
             continue
 
-        if count == "discography":
-            uris = await spotify.get_discography_tracks(token, artist_id, market)
-        else:
-            uris = await spotify.get_top_tracks(token, artist_id, int(count), market)
+        uris = await spotify.get_top_tracks(token, artist_id, int(count), market)
 
         all_uris.extend(uris)
 

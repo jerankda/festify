@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { API } from '../api'
 
 const TRACK_OPTIONS = [
-  { label: 'Top 5',           short: '5',   value: 5 },
-  { label: 'Top 10',          short: '10',  value: 10 },
-  { label: 'Top 20',          short: '20',  value: 20 },
-  { label: 'Full discography', short: 'All', value: 'discography' },
+  { label: 'Top 5',  short: '5',  value: 5 },
+  { label: 'Top 10', short: '10', value: 10 },
+  { label: 'Top 20', short: '20', value: 20 },
 ]
 
 export default function ArtistSearch() {
