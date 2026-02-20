@@ -48,9 +48,9 @@ async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "
         return []
     artist_name = artist_resp.json()["name"]
 
-    # Run three searches in parallel: strict + two pages of broad results
+    # Run four searches in parallel: strict + three pages of broad results
     async with httpx.AsyncClient() as client:
-        strict, broad0, broad1 = await asyncio.gather(
+        strict, broad0, broad1, broad2 = await asyncio.gather(
             client.get(
                 f"{SPOTIFY_API_BASE}/search",
                 headers=headers,
@@ -66,11 +66,16 @@ async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "
                 headers=headers,
                 params={"q": artist_name, "type": "track", "market": market, "limit": 10, "offset": 10},
             ),
+            client.get(
+                f"{SPOTIFY_API_BASE}/search",
+                headers=headers,
+                params={"q": artist_name, "type": "track", "market": market, "limit": 10, "offset": 20},
+            ),
         )
 
     seen_uris: set[str] = set()
     all_tracks: list[dict] = []
-    for resp in (strict, broad0, broad1):
+    for resp in (strict, broad0, broad1, broad2):
         if resp.status_code == 200:
             for t in resp.json().get("tracks", {}).get("items", []):
                 if t["uri"] not in seen_uris:
