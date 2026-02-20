@@ -47,21 +47,33 @@ async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "
         return []
     artist_name = artist_resp.json()["name"]
 
-    # Search for tracks by this artist, sort by popularity
+    # Run two searches in parallel: strict (artist: field) + broad (name only)
     async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{SPOTIFY_API_BASE}/search",
-            headers=headers,
-            params={"q": f"artist:{artist_name}", "type": "track", "market": market, "limit": 10},
+        strict, broad = await asyncio.gather(
+            client.get(
+                f"{SPOTIFY_API_BASE}/search",
+                headers=headers,
+                params={"q": f"artist:{artist_name}", "type": "track", "market": market, "limit": 10},
+            ),
+            client.get(
+                f"{SPOTIFY_API_BASE}/search",
+                headers=headers,
+                params={"q": artist_name, "type": "track", "market": market, "limit": 10},
+            ),
         )
-    print(f"[SPOTIFY] get_top_tracks search q='artist:{artist_name}' market={market} → {resp.status_code}: {resp.text[:300]}", flush=True)
-    if resp.status_code != 200:
-        return []
 
-    all_tracks = resp.json().get("tracks", {}).get("items", [])
+    seen_uris: set[str] = set()
+    all_tracks: list[dict] = []
+    for resp in (strict, broad):
+        if resp.status_code == 200:
+            for t in resp.json().get("tracks", {}).get("items", []):
+                if t["uri"] not in seen_uris:
+                    seen_uris.add(t["uri"])
+                    all_tracks.append(t)
+
     filtered = [t for t in all_tracks if any(a["id"] == artist_id for a in t.get("artists", []))]
     filtered.sort(key=lambda t: t.get("popularity", 0), reverse=True)
-    print(f"[SPOTIFY] get_top_tracks: {len(all_tracks)} results, {len(filtered)} after artist filter, returning {min(len(filtered), limit)}", flush=True)
+    print(f"[SPOTIFY] get_top_tracks: {len(all_tracks)} combined results, {len(filtered)} after artist filter, returning {min(len(filtered), limit)}", flush=True)
     return [t["uri"] for t in filtered[:limit]]
 
 
