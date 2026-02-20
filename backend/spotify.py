@@ -37,16 +37,31 @@ async def search_artists(token: str, query: str, limit: int = 8) -> list[dict]:
 
 
 async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "US") -> list[str]:
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Fetch artist name so we can search by it
+    async with httpx.AsyncClient() as client:
+        artist_resp = await client.get(f"{SPOTIFY_API_BASE}/artists/{artist_id}", headers=headers)
+    if artist_resp.status_code != 200:
+        print(f"[SPOTIFY] get_top_tracks: failed to fetch artist {artist_id} → {artist_resp.status_code}", flush=True)
+        return []
+    artist_name = artist_resp.json()["name"]
+
+    # Search for tracks by this artist, sorted by popularity
     async with httpx.AsyncClient() as client:
         resp = await client.get(
-            f"{SPOTIFY_API_BASE}/artists/{artist_id}/top-tracks",
-            headers={"Authorization": f"Bearer {token}"},
-            params={"market": market},
+            f"{SPOTIFY_API_BASE}/search",
+            headers=headers,
+            params={"q": f"artist:{artist_name}", "type": "track", "market": market, "limit": 50},
         )
-    print(f"[SPOTIFY] get_top_tracks artist={artist_id} market={market} → {resp.status_code}: {resp.text[:200]}", flush=True)
+    print(f"[SPOTIFY] get_top_tracks search artist={artist_name} market={market} → {resp.status_code}", flush=True)
     if resp.status_code != 200:
         return []
-    tracks = resp.json().get("tracks", [])
+
+    tracks = resp.json().get("tracks", {}).get("items", [])
+    # Keep only tracks where this artist appears, sorted by popularity
+    tracks = [t for t in tracks if any(a["id"] == artist_id for a in t.get("artists", []))]
+    tracks.sort(key=lambda t: t.get("popularity", 0), reverse=True)
     return [t["uri"] for t in tracks[:limit]]
 
 
