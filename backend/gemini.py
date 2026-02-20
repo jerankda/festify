@@ -9,7 +9,7 @@ from config import GEMINI_API_KEY
 
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-1.5-flash:generateContent"
+    "gemini-2.0-flash:generateContent"
 )
 
 PROMPT = (
@@ -48,7 +48,7 @@ async def extract_artists_from_image(image_bytes: bytes, content_type: str) -> l
         )
 
     if resp.status_code != 200:
-        raise HTTPException(status_code=502, detail="Gemini API error.")
+        raise HTTPException(status_code=502, detail=f"Gemini API error {resp.status_code}: {resp.text}")
 
     text = resp.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 

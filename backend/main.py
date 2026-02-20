@@ -1,6 +1,8 @@
 import httpx
+import traceback
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -10,6 +12,12 @@ import spotify
 from gemini import extract_artists_from_image
 
 app = FastAPI(title="Festify API")
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    print(f"\n--- UNHANDLED ERROR ---\n{tb}\n-----------------------\n", flush=True)
+    return JSONResponse(status_code=500, content={"detail": tb})
 
 # ---------------------------------------------------------------------------
 # Middleware
@@ -64,6 +72,16 @@ class PlaylistRequest(BaseModel):
 
 @app.post("/playlist/create")
 async def create_playlist(body: PlaylistRequest, request: Request):
+    try:
+        return await _create_playlist(body, request)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+        print(f"\n--- PLAYLIST ERROR ---\n{tb}\n----------------------\n", flush=True)
+        raise HTTPException(status_code=500, detail=tb)
+
+async def _create_playlist(body: PlaylistRequest, request: Request):
     token = await get_valid_token(request.session)
     user_id = request.session.get("spotify_user_id")
 
@@ -107,7 +125,10 @@ async def create_playlist(body: PlaylistRequest, request: Request):
 
         all_uris.extend(uris)
 
-    total = await spotify.add_tracks_to_playlist(token, playlist_id, all_uris)
+    try:
+        total = await spotify.add_tracks_to_playlist(token, playlist_id, all_uris)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"add_tracks error: {traceback.format_exc()}")
 
     return {
         "playlist_name": body.playlist_name,
