@@ -264,6 +264,10 @@ export default function ArtistSearch() {
         <p className="text-red-400 text-sm">{error}</p>
       )}
 
+      <p className="text-white/20 text-xs leading-relaxed pt-2">
+        festify runs on Spotify's free development tier — occasional errors or missing tracks are normal, especially with large requests. If something fails, just try again.
+      </p>
+
     </div>
   )
 }

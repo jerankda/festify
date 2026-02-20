@@ -166,6 +166,10 @@ export default function ArtistList({ initialArtists, onReset, user }) {
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 
+      <p className="text-white/20 text-xs leading-relaxed">
+        festify runs on Spotify's free development tier — occasional errors or missing tracks are normal, especially with large lineups. If something fails, just try again.
+      </p>
+
       <button
         onClick={createPlaylist}
         disabled={creating || !activeCount || !playlistName.trim()}
