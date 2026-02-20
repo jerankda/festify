@@ -14,6 +14,25 @@ async def _spotify_post(token: str, url: str, json: dict) -> httpx.Response:
     return resp
 
 
+async def _spotify_get(
+    client: httpx.AsyncClient,
+    token: str,
+    url: str,
+    params: dict | None = None,
+    max_retries: int = 4,
+) -> httpx.Response:
+    """GET with automatic 429 Retry-After back-off."""
+    headers = {"Authorization": f"Bearer {token}"}
+    for attempt in range(max_retries):
+        resp = await client.get(url, headers=headers, params=params)
+        if resp.status_code != 429:
+            return resp
+        wait = int(resp.headers.get("retry-after", 2)) + 1
+        print(f"[SPOTIFY] 429 rate-limited on {url}, waiting {wait}s (attempt {attempt + 1})", flush=True)
+        await asyncio.sleep(wait)
+    return resp  # return the last 429 if all retries exhausted
+
+
 async def search_artists(token: str, query: str, limit: int = 8) -> list[dict]:
     async with httpx.AsyncClient() as client:
         resp = await client.get(
@@ -78,44 +97,42 @@ async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "
 
 
 async def get_discography_tracks(token: str, artist_id: str, market: str = "US") -> list[str]:
-    """Fetch all track URIs from an artist's albums (albums + singles)."""
-    uris = []
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        # Fetch all albums
-        albums_url = f"{SPOTIFY_API_BASE}/artists/{artist_id}/albums"
-        params = {"include_groups": "album,single", "market": market, "limit": 10}
-        album_ids = []
+    """Fetch all track URIs from an artist's albums/singles with rate-limit handling."""
+    uris: list[str] = []
+    album_ids: list[str] = []
 
-        while albums_url:
-            resp = await client.get(
-                albums_url,
-                headers={"Authorization": f"Bearer {token}"},
-                params=params,
-            )
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        # --- Page through artist albums ---
+        next_url: str | None = f"{SPOTIFY_API_BASE}/artists/{artist_id}/albums"
+        params: dict | None = {"include_groups": "album,single", "market": market, "limit": 10}
+
+        while next_url:
+            resp = await _spotify_get(client, token, next_url, params=params)
             print(f"[SPOTIFY] discography albums {artist_id} → {resp.status_code}: {resp.text[:200]}", flush=True)
             if resp.status_code != 200:
                 break
             data = resp.json()
-            album_ids.extend([a["id"] for a in data["items"]])
-            albums_url = data.get("next")
-            params = {}  # next URL already has params
+            album_ids.extend(a["id"] for a in data["items"])
+            next_url = data.get("next")
+            params = None  # next URL already contains all params
+            await asyncio.sleep(0.1)  # light pacing between pages
 
         print(f"[SPOTIFY] discography {artist_id}: {len(album_ids)} albums/singles found", flush=True)
 
-        # Fetch tracks for each album in batches of 20
+        # --- Fetch tracks for each album in batches of 20 ---
         for i in range(0, len(album_ids), 20):
             batch = album_ids[i:i + 20]
-            resp = await client.get(
+            resp = await _spotify_get(
+                client, token,
                 f"{SPOTIFY_API_BASE}/albums",
-                headers={"Authorization": f"Bearer {token}"},
                 params={"ids": ",".join(batch), "market": market},
             )
-            print(f"[SPOTIFY] discography album-tracks batch {i//20 + 1} → {resp.status_code}", flush=True)
-            if resp.status_code != 200:
-                continue
-            for album in resp.json().get("albums", []):
-                for track in album.get("tracks", {}).get("items", []):
-                    uris.append(track["uri"])
+            print(f"[SPOTIFY] discography album-tracks batch {i // 20 + 1} → {resp.status_code}", flush=True)
+            if resp.status_code == 200:
+                for album in resp.json().get("albums", []):
+                    for track in album.get("tracks", {}).get("items", []):
+                        uris.append(track["uri"])
+            await asyncio.sleep(0.1)  # light pacing between batches
 
     print(f"[SPOTIFY] discography {artist_id}: {len(uris)} total track URIs", flush=True)
     return uris
