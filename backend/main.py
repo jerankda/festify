@@ -85,8 +85,9 @@ async def _create_playlist(body: PlaylistRequest, request: Request):
     token = await get_valid_token(request.session)
     user_id = request.session.get("spotify_user_id")
 
-    # Cache user_id in session so we don't fetch it every time
-    if not user_id:
+    # Cache user_id and market in session so we don't fetch them every time
+    market = request.session.get("spotify_market")
+    if not user_id or not market:
         async with httpx.AsyncClient() as client:
             r = await client.get(
                 f"{SPOTIFY_API_BASE}/me",
@@ -94,8 +95,11 @@ async def _create_playlist(body: PlaylistRequest, request: Request):
             )
         if r.status_code != 200:
             raise HTTPException(status_code=401, detail="Could not fetch user profile.")
-        request.session["spotify_user_id"] = r.json()["id"]
+        me = r.json()
+        request.session["spotify_user_id"] = me["id"]
+        request.session["spotify_market"] = me.get("country", "US")
         user_id = request.session["spotify_user_id"]
+        market = request.session["spotify_market"]
 
     # Create the playlist
     playlist = await spotify.create_playlist(token, user_id, body.playlist_name)
@@ -119,9 +123,9 @@ async def _create_playlist(body: PlaylistRequest, request: Request):
             continue
 
         if count == "discography":
-            uris = await spotify.get_discography_tracks(token, artist_id)
+            uris = await spotify.get_discography_tracks(token, artist_id, market)
         else:
-            uris = await spotify.get_top_tracks(token, artist_id, int(count))
+            uris = await spotify.get_top_tracks(token, artist_id, int(count), market)
 
         all_uris.extend(uris)
 

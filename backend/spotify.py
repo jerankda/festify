@@ -36,26 +36,27 @@ async def search_artists(token: str, query: str, limit: int = 8) -> list[dict]:
     ]
 
 
-async def get_top_tracks(token: str, artist_id: str, limit: int) -> list[str]:
+async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "US") -> list[str]:
     async with httpx.AsyncClient() as client:
         resp = await client.get(
             f"{SPOTIFY_API_BASE}/artists/{artist_id}/top-tracks",
             headers={"Authorization": f"Bearer {token}"},
+            params={"market": market},
         )
-    print(f"[SPOTIFY] get_top_tracks artist={artist_id} → {resp.status_code}: {resp.text[:200]}", flush=True)
+    print(f"[SPOTIFY] get_top_tracks artist={artist_id} market={market} → {resp.status_code}: {resp.text[:200]}", flush=True)
     if resp.status_code != 200:
         return []
     tracks = resp.json().get("tracks", [])
     return [t["uri"] for t in tracks[:limit]]
 
 
-async def get_discography_tracks(token: str, artist_id: str) -> list[str]:
+async def get_discography_tracks(token: str, artist_id: str, market: str = "US") -> list[str]:
     """Fetch all track URIs from an artist's albums (albums + singles)."""
     uris = []
     async with httpx.AsyncClient() as client:
         # Fetch all albums
         albums_url = f"{SPOTIFY_API_BASE}/artists/{artist_id}/albums"
-        params = {"include_groups": "album,single", "limit": 50}
+        params = {"include_groups": "album,single", "market": market, "limit": 50}
         album_ids = []
 
         while albums_url:
@@ -77,7 +78,7 @@ async def get_discography_tracks(token: str, artist_id: str) -> list[str]:
             resp = await client.get(
                 f"{SPOTIFY_API_BASE}/albums",
                 headers={"Authorization": f"Bearer {token}"},
-                params={"ids": ",".join(batch)},
+                params={"ids": ",".join(batch), "market": market},
             )
             if resp.status_code != 200:
                 continue
