@@ -162,6 +162,54 @@ async def scan_poster(request: Request, file: UploadFile = File(...)):
 def health():
     return {"status": "ok"}
 
+@app.get("/debug/spotify-playlist")
+async def debug_spotify_playlist(request: Request):
+    token = await get_valid_token(request.session)
+    # Fetch user_id fresh from Spotify
+    async with httpx.AsyncClient() as client:
+        me = await client.get("https://api.spotify.com/v1/me", headers={"Authorization": f"Bearer {token}"})
+    me_data = me.json()
+    user_id = me_data.get("id")
+
+    # Test 1: Create a playlist
+    async with httpx.AsyncClient() as client:
+        create_resp = await client.post(
+            f"https://api.spotify.com/v1/users/{user_id}/playlists",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"name": "debug test", "public": False},
+        )
+
+    # Test 2: Add a track to an existing playlist
+    async with httpx.AsyncClient() as client:
+        add_resp = await client.post(
+            "https://api.spotify.com/v1/playlists/7CVswaWLNZRCzzgjtc6zPe/tracks",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"uris": ["spotify:track:6DCZcSspjsKoFjzjrWoCdn"]},
+        )
+
+    # Test 3: Try the /me/playlists endpoint as alternative
+    async with httpx.AsyncClient() as client:
+        me_playlist_resp = await client.post(
+            "https://api.spotify.com/v1/users/me/playlists",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"name": "debug test me", "public": False},
+        )
+
+    return {
+        "user_id": user_id,
+        "product": me_data.get("product"),
+        "country": me_data.get("country"),
+        "email": me_data.get("email"),
+        "display_name": me_data.get("display_name"),
+        "token_preview": token[:40],
+        "create_playlist_status": create_resp.status_code,
+        "create_playlist_body": create_resp.json(),
+        "add_track_status": add_resp.status_code,
+        "add_track_body": add_resp.json(),
+        "me_playlist_status": me_playlist_resp.status_code,
+        "me_playlist_body": me_playlist_resp.json(),
+    }
+
 @app.get("/debug/gemini-models")
 async def gemini_models():
     from config import GEMINI_API_KEY
