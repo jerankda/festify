@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from config import (
+    FRONTEND_URL,
     SECRET_KEY,
     SPOTIFY_API_BASE,
     SPOTIFY_AUTH_URL,
@@ -100,7 +101,7 @@ def login(request: Request):
 async def callback(request: Request, code: str = None, state: str = None, error: str = None):
     """Handle the OAuth callback from Spotify."""
     if error:
-        return RedirectResponse("http://127.0.0.1:5173")
+        return RedirectResponse(FRONTEND_URL)
 
     stored_state = request.session.pop("oauth_state", None)
     if not state or state != stored_state:
@@ -126,13 +127,13 @@ async def callback(request: Request, code: str = None, state: str = None, error:
     _set_tokens(request.session, resp.json())
 
     # Redirect to the frontend after successful login
-    return RedirectResponse("http://127.0.0.1:5173")
+    return RedirectResponse(FRONTEND_URL)
 
 
 @router.get("/logout")
 def logout(request: Request):
     request.session.clear()
-    return RedirectResponse("http://127.0.0.1:5173")
+    return RedirectResponse(FRONTEND_URL)
 
 
 @router.get("/me")

@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
-from config import SECRET_KEY, SPOTIFY_API_BASE
+from config import FRONTEND_URL, SECRET_KEY, SPOTIFY_API_BASE
 from auth import router as auth_router, get_valid_token
 import spotify
 from gemini import extract_artists_from_image
@@ -28,14 +28,14 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
     session_cookie="festify_session",
-    max_age=60 * 60 * 24 * 7,  # 1 week
-    https_only=False,           # set True in production
+    max_age=60 * 60 * 24 * 7,
+    https_only=FRONTEND_URL.startswith("https"),
     same_site="lax",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173"],  # Vite dev server
+    allow_origins=[FRONTEND_URL, "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

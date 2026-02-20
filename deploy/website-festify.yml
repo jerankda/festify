@@ -1,0 +1,30 @@
+services:
+  festify-frontend:
+    build:
+      context: /root/docker/website-files/festify/frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://api.festify.jerankda.dev
+    container_name: festify-frontend
+    restart: always
+    networks:
+      - webnetwork
+    expose:
+      - "80"
+
+  festify-backend:
+    build:
+      context: /root/docker/website-files/festify/backend
+      dockerfile: Dockerfile
+    container_name: festify-backend
+    restart: always
+    networks:
+      - webnetwork
+    expose:
+      - "8000"
+    env_file:
+      - /root/docker/website-files/festify/backend/.env
+
+networks:
+  webnetwork:
+    external: true
