@@ -92,18 +92,21 @@ export default function PosterUpload({ user }) {
 
       {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
-      <p className="text-white/25 text-xs leading-relaxed text-center">
-        Poster scanning uses a paid AI API. If festify's been useful,{' '}
-        <a
-          href="https://buymeacoffee.com/jerankda"
-          target="_blank"
-          rel="noreferrer"
-          className="text-white/50 underline underline-offset-2 hover:text-white transition-colors"
-        >
-          a $1 tip
-        </a>
-        {' '}covers the cost for the next few people. No pressure.
-      </p>
+      <div className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <span className="text-lg">☕</span>
+        <p className="text-sm text-white/60 leading-relaxed">
+          Poster scanning uses a paid AI API.{' '}
+          <a
+            href="https://buymeacoffee.com/jerankda"
+            target="_blank"
+            rel="noreferrer"
+            className="text-white underline underline-offset-2 hover:text-green-400 transition-colors"
+          >
+            A $1 tip
+          </a>
+          {' '}covers the cost for the next few people — no pressure, but it helps a lot.
+        </p>
+      </div>
     </div>
   )
 }
