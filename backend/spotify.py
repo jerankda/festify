@@ -131,15 +131,14 @@ async def add_tracks_to_playlist(token: str, playlist_id: str, uris: list[str]) 
     """Add tracks in batches of 100 (Spotify limit). Returns total added."""
     print(f"[SPOTIFY] add_tracks_to_playlist: {len(uris)} uris to add to {playlist_id}", flush=True)
     added = 0
-    async with httpx.AsyncClient() as client:
-        for i in range(0, len(uris), 100):
-            batch = uris[i:i + 100]
-            resp = await client.post(
-                f"{SPOTIFY_API_BASE}/playlists/{playlist_id}/tracks",
-                headers={"Authorization": f"Bearer {token}"},
-                json={"uris": batch},
-            )
-            print(f"[SPOTIFY] add_tracks batch {i//100 + 1} → {resp.status_code}: {resp.text[:200]}", flush=True)
-            if resp.status_code in (200, 201):
-                added += len(batch)
+    for i in range(0, len(uris), 100):
+        batch = uris[i:i + 100]
+        resp = await _spotify_post(
+            token,
+            f"{SPOTIFY_API_BASE}/playlists/{playlist_id}/tracks",
+            {"uris": batch},
+        )
+        print(f"[SPOTIFY] add_tracks batch {i//100 + 1} → {resp.status_code}: {resp.text[:200]}", flush=True)
+        if resp.status_code in (200, 201):
+            added += len(batch)
     return added

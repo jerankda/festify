@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 import traceback
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
@@ -101,10 +102,11 @@ async def _create_playlist(body: PlaylistRequest, request: Request):
         user_id = request.session["spotify_user_id"]
         market = request.session["spotify_market"]
 
-    # Create the playlist
+    # Create the playlist, then wait briefly for Spotify to propagate it
     playlist = await spotify.create_playlist(token, user_id, body.playlist_name)
     playlist_id = playlist["id"]
     playlist_url = playlist["external_urls"]["spotify"]
+    await asyncio.sleep(1)
 
     # Collect track URIs for each artist
     all_uris = []
