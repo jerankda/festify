@@ -3,6 +3,16 @@ import httpx
 from fastapi import HTTPException
 from config import SPOTIFY_API_BASE
 
+async def _spotify_post(token: str, url: str, json: dict) -> httpx.Response:
+    """POST to Spotify with one retry on 403 (token propagation delay)."""
+    for attempt in range(2):
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, headers={"Authorization": f"Bearer {token}"}, json=json)
+        if resp.status_code != 403 or attempt == 1:
+            return resp
+        await asyncio.sleep(1)
+    return resp
+
 
 async def search_artists(token: str, query: str, limit: int = 8) -> list[dict]:
     async with httpx.AsyncClient() as client:
@@ -86,12 +96,11 @@ async def resolve_artist_id(token: str, name: str) -> str | None:
 
 
 async def create_playlist(token: str, user_id: str, name: str) -> dict:
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{SPOTIFY_API_BASE}/users/{user_id}/playlists",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"name": name, "public": True, "description": "Created with Festify"},
-        )
+    resp = await _spotify_post(
+        token,
+        f"{SPOTIFY_API_BASE}/users/{user_id}/playlists",
+        {"name": name, "public": True, "description": "Created with Festify"},
+    )
     print(f"[SPOTIFY] create_playlist url=users/{user_id}/playlists → {resp.status_code}: {resp.text[:300]}", flush=True)
     if resp.status_code not in (200, 201):
         raise HTTPException(status_code=500, detail=f"Failed to create playlist: {resp.status_code} {resp.text}")
