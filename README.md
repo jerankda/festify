@@ -65,6 +65,14 @@ For production, update `SPOTIFY_REDIRECT_URI` and `FRONTEND_URL` to your actual 
 
 ---
 
+## Why the hosted version no longer works
+
+Spotify's developer platform has two modes: development mode (up to 5 allowlisted users) and extended quota mode (unlimited users). As of May 2025, Spotify only grants extended quota mode to registered organisations with an active service and at least 250k monthly active users — individuals can no longer apply.
+
+This means the hosted version at [festify.jerankda.dev](https://festify.jerankda.dev) only works for allowlisted accounts. If you want to use it yourself, the easiest path is to self-host: create your own free Spotify developer app at [developer.spotify.com](https://developer.spotify.com), plug your own credentials into `.env`, and run it locally or on your own server. Your app will be in development mode with just you as the user, which works fine.
+
+---
+
 ## Spotify notes
 
 This runs under Spotify's development mode, which has a few quirks:
