@@ -58,10 +58,11 @@ async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "
     if resp.status_code != 200:
         return []
 
-    tracks = resp.json().get("tracks", {}).get("items", [])
-    tracks = [t for t in tracks if any(a["id"] == artist_id for a in t.get("artists", []))]
-    tracks.sort(key=lambda t: t.get("popularity", 0), reverse=True)
-    return [t["uri"] for t in tracks[:limit]]
+    all_tracks = resp.json().get("tracks", {}).get("items", [])
+    filtered = [t for t in all_tracks if any(a["id"] == artist_id for a in t.get("artists", []))]
+    filtered.sort(key=lambda t: t.get("popularity", 0), reverse=True)
+    print(f"[SPOTIFY] get_top_tracks: {len(all_tracks)} results, {len(filtered)} after artist filter, returning {min(len(filtered), limit)}", flush=True)
+    return [t["uri"] for t in filtered[:limit]]
 
 
 async def get_discography_tracks(token: str, artist_id: str, market: str = "US") -> list[str]:
@@ -128,6 +129,7 @@ async def create_playlist(token: str, user_id: str, name: str) -> dict:
 
 async def add_tracks_to_playlist(token: str, playlist_id: str, uris: list[str]) -> int:
     """Add tracks in batches of 100 (Spotify limit). Returns total added."""
+    print(f"[SPOTIFY] add_tracks_to_playlist: {len(uris)} uris to add to {playlist_id}", flush=True)
     added = 0
     async with httpx.AsyncClient() as client:
         for i in range(0, len(uris), 100):
@@ -137,6 +139,7 @@ async def add_tracks_to_playlist(token: str, playlist_id: str, uris: list[str]) 
                 headers={"Authorization": f"Bearer {token}"},
                 json={"uris": batch},
             )
+            print(f"[SPOTIFY] add_tracks batch {i//100 + 1} → {resp.status_code}: {resp.text[:200]}", flush=True)
             if resp.status_code in (200, 201):
                 added += len(batch)
     return added
