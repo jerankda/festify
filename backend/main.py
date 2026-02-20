@@ -1,9 +1,10 @@
+import httpx
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
-from config import SECRET_KEY
+from config import SECRET_KEY, SPOTIFY_API_BASE
 from auth import router as auth_router, get_valid_token
 import spotify
 from gemini import extract_artists_from_image
@@ -68,9 +69,7 @@ async def create_playlist(body: PlaylistRequest, request: Request):
 
     # Cache user_id in session so we don't fetch it every time
     if not user_id:
-        import httpx as _httpx
-        from config import SPOTIFY_API_BASE
-        async with _httpx.AsyncClient() as client:
+        async with httpx.AsyncClient() as client:
             r = await client.get(
                 f"{SPOTIFY_API_BASE}/me",
                 headers={"Authorization": f"Bearer {token}"},
