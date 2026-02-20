@@ -1,3 +1,9 @@
+> [!WARNING]
+> **Spotify killed public access for independent developers.**
+> As of May 2025, Spotify only grants extended API access to registered companies with 250,000+ monthly active users. Individual developers are permanently locked out. The hosted version at [festify.jerankda.dev](https://festify.jerankda.dev) can only serve a handful of allowlisted accounts as a result — not because the app is broken, but because Spotify decided small builders don't get to play anymore.
+>
+> **You can still use this.** Clone the repo, create your own free Spotify developer app, add your credentials to `.env`, and self-host it. See [Why the hosted version no longer works](#why-the-hosted-version-no-longer-works) below.
+
 # festify
 
 A small side project for building Spotify playlists from festival lineups. Upload a poster image and it reads the artists automatically, or search artists by name yourself. Pick how many tracks per artist, hit create, and the playlist shows up in your Spotify.
