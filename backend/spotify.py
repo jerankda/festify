@@ -68,7 +68,7 @@ async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "
 async def get_discography_tracks(token: str, artist_id: str, market: str = "US") -> list[str]:
     """Fetch all track URIs from an artist's albums (albums + singles)."""
     uris = []
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         # Fetch all albums
         albums_url = f"{SPOTIFY_API_BASE}/artists/{artist_id}/albums"
         params = {"include_groups": "album,single", "market": market, "limit": 50}
@@ -80,12 +80,15 @@ async def get_discography_tracks(token: str, artist_id: str, market: str = "US")
                 headers={"Authorization": f"Bearer {token}"},
                 params=params,
             )
+            print(f"[SPOTIFY] discography albums {artist_id} → {resp.status_code}: {resp.text[:200]}", flush=True)
             if resp.status_code != 200:
                 break
             data = resp.json()
             album_ids.extend([a["id"] for a in data["items"]])
             albums_url = data.get("next")
             params = {}  # next URL already has params
+
+        print(f"[SPOTIFY] discography {artist_id}: {len(album_ids)} albums/singles found", flush=True)
 
         # Fetch tracks for each album in batches of 20
         for i in range(0, len(album_ids), 20):
@@ -95,12 +98,14 @@ async def get_discography_tracks(token: str, artist_id: str, market: str = "US")
                 headers={"Authorization": f"Bearer {token}"},
                 params={"ids": ",".join(batch), "market": market},
             )
+            print(f"[SPOTIFY] discography album-tracks batch {i//20 + 1} → {resp.status_code}", flush=True)
             if resp.status_code != 200:
                 continue
             for album in resp.json().get("albums", []):
                 for track in album.get("tracks", {}).get("items", []):
                     uris.append(track["uri"])
 
+    print(f"[SPOTIFY] discography {artist_id}: {len(uris)} total track URIs", flush=True)
     return uris
 
 
