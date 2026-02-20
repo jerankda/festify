@@ -9,7 +9,7 @@ from config import GEMINI_API_KEY
 
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-2.0-flash-001:generateContent"
+    "gemini-2.0-flash:generateContent"
 )
 
 PROMPT = (
