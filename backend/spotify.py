@@ -71,7 +71,7 @@ async def get_discography_tracks(token: str, artist_id: str, market: str = "US")
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Fetch all albums
         albums_url = f"{SPOTIFY_API_BASE}/artists/{artist_id}/albums"
-        params = {"include_groups": "album,single", "market": market, "limit": 20}
+        params = {"include_groups": "album,single", "market": market, "limit": 10}
         album_ids = []
 
         while albums_url:
