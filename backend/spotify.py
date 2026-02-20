@@ -52,7 +52,7 @@ async def get_top_tracks(token: str, artist_id: str, limit: int, market: str = "
         resp = await client.get(
             f"{SPOTIFY_API_BASE}/search",
             headers=headers,
-            params={"q": f"artist:{artist_name}", "type": "track", "market": market, "limit": 50},
+            params={"q": f"artist:{artist_name}", "type": "track", "market": market, "limit": 10},
         )
     print(f"[SPOTIFY] get_top_tracks search q='artist:{artist_name}' market={market} → {resp.status_code}: {resp.text[:300]}", flush=True)
     if resp.status_code != 200:
