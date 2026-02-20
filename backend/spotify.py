@@ -19,15 +19,22 @@ async def _spotify_get(
     token: str,
     url: str,
     params: dict | None = None,
-    max_retries: int = 4,
+    max_retries: int = 3,
+    max_wait: int = 10,
 ) -> httpx.Response:
-    """GET with automatic 429 Retry-After back-off."""
+    """GET with automatic 429 Retry-After back-off. Fails fast if Retry-After exceeds max_wait."""
     headers = {"Authorization": f"Bearer {token}"}
     for attempt in range(max_retries):
         resp = await client.get(url, headers=headers, params=params)
         if resp.status_code != 429:
             return resp
         wait = int(resp.headers.get("retry-after", 2)) + 1
+        if wait > max_wait:
+            print(f"[SPOTIFY] 429 Retry-After={wait}s exceeds cap ({max_wait}s) — aborting", flush=True)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Spotify rate limit exceeded. Try again in ~{wait // 60} minutes.",
+            )
         print(f"[SPOTIFY] 429 rate-limited on {url}, waiting {wait}s (attempt {attempt + 1})", flush=True)
         await asyncio.sleep(wait)
     return resp  # return the last 429 if all retries exhausted
