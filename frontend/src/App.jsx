@@ -77,7 +77,7 @@ export default function App() {
 
       {/* Main content */}
       <main className="max-w-2xl mx-auto px-4">
-        {mode === 'search' ? <ArtistSearch user={user} /> : <PosterUpload user={user} />}
+        {mode === 'search' ? <ArtistSearch /> : <PosterUpload user={user} />}
       </main>
     </div>
   )
