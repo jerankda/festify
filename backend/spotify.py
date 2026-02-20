@@ -31,8 +31,9 @@ async def get_top_tracks(token: str, artist_id: str, limit: int) -> list[str]:
         resp = await client.get(
             f"{SPOTIFY_API_BASE}/artists/{artist_id}/top-tracks",
             headers={"Authorization": f"Bearer {token}"},
-            params={"market": "US"},
+            params={"market": "from_token"},
         )
+    print(f"[SPOTIFY] get_top_tracks artist={artist_id} → {resp.status_code}: {resp.text[:200]}", flush=True)
     if resp.status_code != 200:
         return []
     tracks = resp.json().get("tracks", [])
@@ -91,7 +92,7 @@ async def create_playlist(token: str, user_id: str, name: str) -> dict:
             headers={"Authorization": f"Bearer {token}"},
             json={"name": name, "public": True, "description": "Created with Festify"},
         )
-    print(f"[SPOTIFY] create_playlist → {resp.status_code}: {resp.text[:300]}", flush=True)
+    print(f"[SPOTIFY] create_playlist url=users/{user_id}/playlists → {resp.status_code}: {resp.text[:300]}", flush=True)
     if resp.status_code not in (200, 201):
         raise HTTPException(status_code=500, detail=f"Failed to create playlist: {resp.status_code} {resp.text}")
     return resp.json()
