@@ -87,7 +87,7 @@ def login(request: Request):
         "redirect_uri": SPOTIFY_REDIRECT_URI,
         "scope": SPOTIFY_SCOPES,
         "state": state,
-        "show_dialog": "false",
+        "show_dialog": "true",
     }
     url = SPOTIFY_AUTH_URL + "?" + urllib.parse.urlencode(params)
     return RedirectResponse(url)
