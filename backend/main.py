@@ -161,3 +161,13 @@ async def scan_poster(request: Request, file: UploadFile = File(...)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/debug/gemini-models")
+async def gemini_models():
+    from config import GEMINI_API_KEY
+    async with httpx.AsyncClient() as client:
+        r = await client.get(
+            "https://generativelanguage.googleapis.com/v1beta/models",
+            params={"key": GEMINI_API_KEY},
+        )
+    return r.json()

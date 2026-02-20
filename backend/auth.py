@@ -39,6 +39,7 @@ def _set_tokens(session: dict, data: dict) -> None:
     session["access_token"] = data["access_token"]
     session["refresh_token"] = data.get("refresh_token") or session.get("refresh_token")
     session["expires_at"] = int(time.time()) + int(data["expires_in"]) - 60  # 60s buffer
+    print(f"[AUTH] Token scopes granted: {data.get('scope', 'none')}", flush=True)
 
 
 async def _refresh_access_token(session: dict) -> None:

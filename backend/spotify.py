@@ -91,6 +91,7 @@ async def create_playlist(token: str, user_id: str, name: str) -> dict:
             headers={"Authorization": f"Bearer {token}"},
             json={"name": name, "public": True, "description": "Created with Festify"},
         )
+    print(f"[SPOTIFY] create_playlist → {resp.status_code}: {resp.text[:300]}", flush=True)
     if resp.status_code not in (200, 201):
         raise HTTPException(status_code=500, detail=f"Failed to create playlist: {resp.status_code} {resp.text}")
     return resp.json()
